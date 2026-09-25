@@ -23,6 +23,7 @@ def rsa_keygen(p: int, q: int):
     phi = (p - 1) * (q - 1)
 
     e_key = 65537  # Nilai umum untuk e
+    # jika 65537 gagal, mulai dari bilangan 3 dan cari bilangan ganjil yang relatif prima dengan phi
     if phi <= e_key or math.gcd(e_key, phi) != 1:
         e_key = 3
         while math.gcd(e_key, phi) != 1:
@@ -43,7 +44,7 @@ def rsa_keygen(p: int, q: int):
 
 def encrypt_rsa(plaintext: str, public_key: tuple[int, int]) -> str:
     """
-    Enkripsi RSA sederhana.Untuk setiap karakter dalam plaintext, konversi ke nilai ASCII, lalu enkripsi menggunakan kunci publik (e_key, n_key).
+    Enkripsi seluruh plaintext UTF-8 sebagai satu bilangan RSA.
 
     Args:
         plaintext (str): Plaintext yang akan dienkripsi.
@@ -54,20 +55,22 @@ def encrypt_rsa(plaintext: str, public_key: tuple[int, int]) -> str:
     """
 
     e_key, n_key = public_key
-    ciphertext = []
-    for char in plaintext:
-        ascii_value = ord(char)
-        # Enkripsi dengan rumus RSA: c = (m^e) mod n
-        encrypted_value = pow(ascii_value, e_key, n_key)
-        ciphertext.append(str(encrypted_value))
-    
-    return ' '.join(ciphertext)
+    if not plaintext:
+        return ""
+
+    message_bytes = plaintext.encode("utf-8")
+    message_value = int.from_bytes(message_bytes, byteorder="big")
+    if message_value >= n_key:
+        raise ValueError("Plaintext terlalu besar untuk modulus n. Gunakan p dan q yang lebih besar.")
+
+    encrypted_value = pow(message_value, e_key, n_key)
+    return str(encrypted_value)
 
 
 
 def decrypt_rsa(ciphertext: str, private_key: tuple[int, int]):
     """
-    Dekripsi RSA sederhana. Untuk setiap nilai dalam ciphertext, dekripsi menggunakan kunci privat (d_key, n_key), lalu konversi kembali ke karakter.
+    Dekripsi satu bilangan RSA menjadi seluruh plaintext UTF-8.
 
     Args:
         ciphertext (str): Ciphertext yang akan didekripsi.
@@ -77,12 +80,21 @@ def decrypt_rsa(ciphertext: str, private_key: tuple[int, int]):
         str: Plaintext.
     """
 
+    if not ciphertext.strip():
+        return ""
+
     d_key, n_key = private_key
-    plaintext = []
-    for value in ciphertext.split():
-        encrypted_value = int(value)
-        # Dekripsi dengan rumus RSA: m = (c^d) mod n
-        decrypted_value = pow(encrypted_value, d_key, n_key)
-        plaintext.append(chr(decrypted_value))
-    
-    return ''.join(plaintext)
+    values = ciphertext.split()
+    if len(values) != 1:
+        raise ValueError("Ciphertext RSA harus berupa satu bilangan.")
+
+    encrypted_value = int(values[0])
+    if not 0 <= encrypted_value < n_key:
+        raise ValueError("Nilai ciphertext harus berada di antara 0 dan n - 1.")
+
+    decrypted_value = pow(encrypted_value, d_key, n_key)
+    byte_length = max(1, (decrypted_value.bit_length() + 7) // 8)
+    try:
+        return decrypted_value.to_bytes(byte_length, byteorder="big").decode("utf-8")
+    except UnicodeDecodeError as error:
+        raise ValueError("Ciphertext tidak menghasilkan plaintext UTF-8 yang valid.") from error

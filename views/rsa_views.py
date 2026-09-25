@@ -17,9 +17,9 @@ def render_key_generation():
 
     cols = st.columns(2)
     with cols[0]:
-        p = st.number_input("Masukkan bilangan prima p", step=1, min_value=2)
+        p = st.number_input("Masukkan bilangan prima p (contoh: 17)", step=1, min_value=2)
     with cols[1]:
-        q = st.number_input("Masukkan bilangan prima q", step=1, min_value=2, value=3)
+        q = st.number_input("Masukkan bilangan prima q (contoh: 19)", step=1, min_value=2, value=3)
     if st.button("Generate Key Pair"):
         if is_prime(p) and is_prime(q) and p != q:
             rsa_keys = rsa_keygen(p, q)
@@ -40,9 +40,26 @@ def render_key_generation():
             st.write(f"Prime p: `{keys['p']}`")
             st.write(f"Prime q: `{keys['q']}`")
             st.write(f"Modulus n: `{keys['n']}`")
-            st.write(f"Totient φ(n): `{keys['phi']}`")
+            st.write(f"Totient Euler (phi) φ(n): `{keys['phi']}`")
     else:
         st.info("RSA key belum di-generate")
+
+
+def key_generation_process(rsa_keys):
+    st.write("### Proses Key Generation RSA")
+    st.write(f"1. Diberikan dua bilangan prima $p = {rsa_keys['p']}$ dan $q = {rsa_keys['q']}$")
+    st.write(f"2. Hitung modulus $$n = p \\times q = {rsa_keys['p']} \\times {rsa_keys['q']} = {rsa_keys['p'] * rsa_keys['q']}$$")
+    st.write(r"3. Hitung fungsi Totient Euler")
+    st.latex(r"\phi(n) = (p - 1)(q - 1)")
+    st.latex(rf"\phi(n) = ({rsa_keys['p']} - 1)({rsa_keys['q']} - 1)")
+    st.latex(rf"\phi(n) = {rsa_keys['p'] - 1} \times {rsa_keys['q'] - 1} = {(rsa_keys['p'] - 1) * (rsa_keys['q'] - 1)}")
+    st.write(f"4. Pilih bilangan bulat $e$ sebagai kunci publik yang relatif prima terhadap $\\phi(n)$ dan $1 < e < \\phi(n)$. Umumnya, $e = 65537$ digunakan.")
+    st.write(r"5. Hitung kunci privat $d$ sebagai invers modular dari $e$ modulo $\phi(n)$, yaitu:")
+    st.latex(r"d = e^{-1} \pmod{\phi(n)}")
+    st.latex(rf"d = {rsa_keys['n']}^{{-1}} \pmod{{{rsa_keys['phi']}}} = {rsa_keys['private_key'][0]}")
+    st.write("6. Maka didapatkan kunci publik dan kunci privat.")
+    st.latex(rf"\text{{Public Key (e, n)}} = ({rsa_keys['public_key'][0]}, {rsa_keys['public_key'][1]})")
+    st.latex(rf"\text{{Private Key (d, n)}} = ({rsa_keys['private_key'][0]}, {rsa_keys['private_key'][1]})")
 
 
 def render_rsa_view():
@@ -63,23 +80,26 @@ def render_rsa_view():
             if st.button("Enkripsi", key="rsa_encrypt_button"):
                 if not plaintext:
                     st.error("Teks asli harus diisi.")
-                elif any(ord(char) >= keys["n"] for char in plaintext):
-                    st.error("Setiap nilai karakter plaintext harus lebih kecil dari modulus n.")
                 else:
-                    ciphertext = encrypt_rsa(plaintext, keys["public_key"])
-                    st.text_area(
-                        "Hasil enkripsi (angka ciphertext):",
-                        ciphertext,
-                        height=150,
-                        key="rsa_encryption_result",
-                    )
+                    try:
+                        ciphertext = encrypt_rsa(plaintext, keys["public_key"])
+                        st.text_area(
+                            "Hasil enkripsi (satu angka ciphertext):",
+                            ciphertext,
+                            height=150,
+                            key="rsa_encryption_result",
+                        )
+                    except ValueError as error:
+                        st.error(str(error))
+
+                    key_generation_process(keys)
         else:
             st.info("Generate RSA key pair terlebih dahulu.")
 
     with tabs[1]:
         st.subheader("Dekripsi")
         ciphertext = st.text_area(
-            "Masukkan ciphertext (angka dipisahkan spasi):",
+            "Masukkan ciphertext (satu angka):",
             key="rsa_ciphertext",
         )
 
@@ -97,12 +117,10 @@ def render_rsa_view():
                             height=150,
                             key="rsa_decryption_result",
                         )
-                    except ValueError:
-                        st.error("Ciphertext harus berisi angka yang dipisahkan spasi.")
+                    except ValueError as error:
+                        st.error(str(error))
         else:
             st.info("Generate RSA key pair terlebih dahulu.")
-
-        # TODO: tambah visualisasi, nyusul
 
 
 if __name__ == "__main__":
