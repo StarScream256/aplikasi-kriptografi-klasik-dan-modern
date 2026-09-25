@@ -1,11 +1,10 @@
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
-
+from dataclasses import dataclass
 from algorithms.xor import decrypt_xor, encrypt_xor
 from utils.xor_formats import (
     ascii_to_ciphertext,
