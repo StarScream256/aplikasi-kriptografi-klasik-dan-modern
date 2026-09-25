@@ -55,10 +55,6 @@ Saat ini project ini masih dalam tahap pengembangan untuk menentukan 2 algoritma
 - Affine Cipher
 - Playfair Cipher
 
-Rekomendasi yang paling cocok untuk penggunaan edukatif adalah:
-- Caesar Cipher sebagai pengenalan dasar
-- Vigenere Cipher sebagai tahap lanjutan yang lebih kompleks
-
 ### 2. Algoritma Modern
 
 #### RSA
