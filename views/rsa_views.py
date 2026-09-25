@@ -10,16 +10,18 @@ from utils.math_utils import is_prime
 
 def render_key_generation():
     st.markdown("### Generate Kunci RSA")
-    st.write("Generate kunci publik (untuk enkripsi) dan privat (untuk dekripsi) untuk algoritma RSA.")
+    st.write("Generate kunci publik (untuk enkripsi) dan privat (untuk dekripsi) untuk algoritma RSA. Dapatkan angka prima besar [link](https://bigprimes.org/)")
     
     if "rsa_keys" not in st.session_state:
         st.session_state.rsa_keys = None
 
     cols = st.columns(2)
     with cols[0]:
-        p = st.number_input("Masukkan bilangan prima p (contoh: 17)", step=1, min_value=2)
+        p_input = st.text_input("Masukkan bilangan prima p")
+        p = int(p_input) if p_input else 0
     with cols[1]:
-        q = st.number_input("Masukkan bilangan prima q (contoh: 19)", step=1, min_value=2, value=3)
+        q_input = st.text_input("Masukkan bilangan prima q")
+        q = int(q_input) if q_input else 0
     if st.button("Generate Key Pair"):
         if is_prime(p) and is_prime(q) and p != q:
             rsa_keys = rsa_keygen(p, q)
