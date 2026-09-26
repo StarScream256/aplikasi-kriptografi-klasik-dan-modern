@@ -12,21 +12,20 @@ Tujuan utama dari project ini adalah:
 
 ## Fitur Utama
 
-- 2 algoritma klasik yang akan dikembangkan (misalnya Caesar dan Vigenere, atau dapat disesuaikan sesuai kebutuhan)
-- 2 algoritma modern yang sudah dirancang dalam project ini: RSA dan XOR
-- Sistem super enkripsi yang menggabungkan 4 algoritma dalam satu pipeline
-- Visualisasi proses per karakter secara detail
-- Antarmuka berbasis Streamlit yang ramah pengguna
-- Desain UI yang sederhana, fokus pada pembelajaran dan kemudahan penggunaan
+- Caesar Cipher dan Vigenere Cipher untuk transformasi alfabet A-Z.
+- RSA yang memproses pesan UTF-8 dalam beberapa blok byte.
+- XOR dengan kunci berulang dan pilihan representasi ciphertext Raw, ASCII Number, Hex, atau Binary.
+- Modul super-enkripsi yang menggabungkan Caesar, Vigenere, XOR, dan RSA.
+- Antarmuka Streamlit untuk RSA dan XOR. Menu Caesar, Vigenere, dan Super Enkripsi masih berupa placeholder di `main.py`.
 
 ---
 
 ## Gambaran Project
 
-Project ini akan menjadi aplikasi edukasi yang menampilkan:
+Project ini adalah aplikasi edukasi yang menyediakan:
 
 1. Algoritma Klasik
-   - teknik enkripsi tradisional yang lebih sederhana
+   - Caesar Cipher dan Vigenere Cipher
    - cocok untuk memahami dasar kriptografi
    - biasanya lebih mudah diajarkan melalui proses per langkah
 
@@ -35,28 +34,28 @@ Project ini akan menjadi aplikasi edukasi yang menampilkan:
    - XOR untuk operasi logika sederhana namun powerful
 
 3. Super Enkripsi
-   - gabungan beberapa algoritma menjadi satu mekanisme keamanan
-   - proses dilakukan berurutan agar pesan lebih aman dan lebih menarik untuk dipelajari
+   - modul algoritma yang menggabungkan empat algoritma secara berurutan
+   - pipeline untuk pembelajaran; penggabungan ini tidak menjadikan algoritma klasik atau XOR aman untuk penggunaan nyata
 
-4. Visual Interaktif
-   - tampilan antarmuka dibuat lebih modern dan menarik
-   - karakter anime berperan sebagai narator/panduan yang menjelaskan alur enkripsi
+4. Antarmuka
+   - Streamlit saat ini menyediakan tampilan untuk RSA dan XOR
+   - tampilan Caesar, Vigenere, dan Super Enkripsi belum diintegrasikan ke Streamlit
 
 ---
 
-## Algoritma yang Akan Dikembangkan
+## Algoritma
 
 ### 1. Algoritma Klasik
 
 1. **Caesar Cipher**
    - Mendukung pergeseran positif (maju) dan negatif (mundur).
-   - Menampilkan **Tabel Pemetaan Alfabet (A–Z)** penuh di awal.
-   - Menampilkan skema panah indikator pergeseran dinamis per karakter.
+   - Membersihkan input menjadi huruf sebelum enkripsi atau dekripsi.
+   - Mengembalikan hasil dan daftar langkah proses.
 
 2. **Vigenère Cipher**
    - Pemrosesan alfabet A–Z (Modulo 26).
-   - Dilengkapi tahap *preprocessing* otomatis untuk membersihkan spasi dan karakter non-huruf.
-   - Menampilkan **Tabel Penyelarasan Kunci** berulang terhadap teks secara visual.
+   - Mengulang kunci sepanjang teks dan membersihkan spasi serta karakter non-huruf.
+   - Mengembalikan hasil dan detail proses per karakter.
 
 ### 2. Algoritma Modern
 
@@ -64,58 +63,55 @@ Project ini akan menjadi aplikasi edukasi yang menampilkan:
 RSA adalah algoritma kriptografi asimetris yang menggunakan pasangan kunci publik dan kunci privat.
 
 Fitur utama:
-- key generation berdasarkan dua bilangan prima
-- enkripsi dengan kunci publik
-- dekripsi dengan kunci privat
-- cocok untuk pembelajaran konsep modulus, phi, dan inverse modulo
+- Pembangkitan pasangan kunci dari dua bilangan prima.
+- Pesan UTF-8 dibagi menjadi blok byte sesuai ukuran modulus.
+- Setiap blok ciphertext ditulis sebagai `panjang_byte:nilai`, dipisahkan spasi.
+- Cocok untuk mempelajari modulus, phi, invers modulo, dan pemrosesan blok.
 
 #### XOR
 XOR adalah operasi logika yang sangat sederhana namun populer dalam kriptografi modern untuk pembelajaran dasar.
 
 Fitur utama:
-- XOR dengan key yang sama panjang atau cycle key
-- mudah dipahami
-- sangat cocok untuk visualisasi bit per bit
+- Kunci diulang sepanjang pesan dan wajib diisi.
+- Tampilan menyediakan format Raw, ASCII Number, Hex, dan Binary.
+- XOR di sini adalah implementasi edukatif, bukan enkripsi aman untuk data nyata.
 
 ### 3. Super Enkripsi
 
-Konsep super enkripsi di project ini adalah menggabungkan 4 algoritma menjadi satu pipeline, misalnya:
+`SuperEncryptionCipher` di `algorithms/super_encryption.py` menjalankan pipeline berikut:
 
-Plaintext
-  -> Algoritma Klasik 1
-  -> Algoritma Klasik 2
-  -> XOR
-  -> RSA
-  -> Ciphertext Final
+Plaintext -> Caesar -> Vigenere -> XOR -> RSA -> encoding huruf A-Z
 
-Untuk dekripsi, proses dilakukan secara terbalik:
+RSA menghasilkan ciphertext blok berupa teks dengan angka, titik dua, dan spasi. Modul super-enkripsi mengodekan setiap byte ciphertext tersebut menjadi dua huruf A-Z, sehingga ciphertext akhirnya hanya berisi huruf. Dekripsi mengembalikan encoding ini lalu membalik setiap tahap:
 
-Ciphertext Final
-  -> RSA decrypt
-  -> XOR decrypt
-  -> Algoritma Klasik 2 decrypt
-  -> Algoritma Klasik 1 decrypt
-  -> Plaintext
+Ciphertext A-Z -> decode -> RSA decrypt -> XOR decrypt -> Vigenere decrypt -> Caesar decrypt -> plaintext
 
-Tujuan dari konsep ini adalah:
-- menampilkan bahwa keamanan data dapat ditingkatkan dengan mengkombinasikan beberapa metode
-- memberi gambaran real-world tentang layered security
-- meningkatkan nilai edukasi project secara visual dan teknis
+Contoh pemakaian modul:
+
+```python
+from algorithms.rsa import rsa_keygen
+from algorithms.super_encryption import SuperEncryptionCipher
+
+keys = rsa_keygen(1009, 1013)
+cipher = SuperEncryptionCipher(caesar_shift=3, vigenere_key="KEY", xor_key="XOR")
+
+ciphertext, encryption_steps = cipher.encrypt("Pesan rahasia", keys["public_key"])
+plaintext, decryption_steps = cipher.decrypt(ciphertext, keys["private_key"])
+```
+
+Caesar dan Vigenere menghapus spasi serta karakter non-huruf, sehingga plaintext hasil dekripsi berupa huruf kapital A-Z. Kunci prima pada contoh hanya untuk demonstrasi dan tidak aman untuk penggunaan nyata. Pipeline ini belum memiliki tampilan Streamlit dan belum dihubungkan ke menu aplikasi.
 
 ---
 
 ## Konsep UI yang Sederhana
 
-Project ini fokus pada pengalaman belajar yang mudah dipahami dan tidak berlebihan secara visual.
+Antarmuka Streamlit tersedia untuk RSA dan XOR. Caesar dan Vigenere juga memiliki menu berbasis CLI. Di Streamlit, menu Caesar, Vigenere, dan Super Enkripsi masih menampilkan placeholder.
 
 ### Struktur UI
 
-- Sidebar: daftar algoritma dan langkah-langkah
-- Main Panel: area enkripsi dan dekripsi utama
-- Panel Keterangan: penjelasan singkat tentang proses yang sedang berjalan
-- Output: hasil cipher, key, dan langkah logika yang mudah dibaca
-
-Tujuan dari desain ini adalah menjaga aplikasi tetap edukatif, bersih, dan mudah digunakan oleh pengguna pemula.
+- Sidebar: navigasi algoritma.
+- RSA dan XOR: area enkripsi/dekripsi dan detail proses.
+- Super Enkripsi: kelas algoritma sudah tersedia, tetapi belum memiliki view.
 
 ---
 
@@ -127,7 +123,10 @@ aplikasi-kriptografi-klasik-dan-modern/
 ├── README.md
 ├── algorithms/
 │   ├── __init__.py
+│   ├── caesar.py
 │   ├── rsa.py
+│   ├── super_encryption.py
+│   ├── vigenere.py
 │   └── xor.py
 ├── utils/
 │   ├── __init__.py
@@ -136,7 +135,9 @@ aplikasi-kriptografi-klasik-dan-modern/
 │   └── xor_formats.py
 └── views/
     ├── __init__.py
+    ├── caesar_views.py
     ├── rsa_views.py
+    ├── vigenere_views.py
     └── xor_views.py
 ```
 
@@ -157,57 +158,31 @@ cd aplikasi-kriptografi-klasik-dan-modern
 streamlit run main.py
 ```
 
-Jika project nanti dikembangkan lebih lanjut, dapat ditambahkan:
-- fitur perbandingan algoritma
-- chart visualisasi keamanan
-- mode demo langkah demi langkah
-- mode super enkripsi interaktif
+Pengembangan berikutnya dapat mencakup integrasi view Caesar, Vigenere, dan Super Enkripsi ke menu Streamlit.
 
 ---
 
 ## Roadmap Pengembangan
 
-### Tahap 1: Dasar aplikasi
+### Tahap 1: Algoritma dasar
 - [x] Menyiapkan project struktur dasar
 - [x] Menambahkan RSA
 - [x] Menambahkan XOR
-- [x] Menambahkan 2 algoritma klasik
-- [ ] Menyempurnakan UI
+- [x] Menambahkan Caesar dan Vigenere
+- [x] Membuat modul super-enkripsi dan dekripsi
 
-### Tahap 2: Visualisasi edukasi
-- [ ] Menambahkan panel penjelasan per tahap
-- [ ] Menyempurnakan tampilan agar lebih rapi dan mudah dipahami
+### Tahap 2: Integrasi UI
+- [ ] Membuat view Streamlit Caesar dan Vigenere
+- [ ] Membuat view Streamlit Super Enkripsi
+- [ ] Menghubungkan view tersebut ke navigasi aplikasi
 
-### Tahap 3: Super enkripsi
-- [ ] Menggabungkan 4 algoritma dalam satu pipeline
-- [ ] Menambah mode enkripsi dan dekripsi multi-langkah
-- [ ] Menyediakan output yang mudah dipahami pengguna
-
-### Tahap 4: Polishing
+### Tahap 3: Polishing
 - [ ] Desain lebih modern dan menarik
 - [ ] Peningkatan UX
 - [ ] Dokumentasi penggunaan yang lebih lengkap
 
 ---
 
-## Catatan Pengembangan
+## Catatan Keamanan
 
-Project ini sangat cocok untuk:
-- belajar kriptografi secara visual,
-- membuat demo pembelajaran algoritma,
-- menyusun portfolio Python berbasis aplikasi interaktif,
-- menampilkan kombinasi ilmu keamanan dan desain UI.
-
-Dengan pendekatan UI yang sederhana dan rapi, project ini tetap menjadi alat pembelajaran yang informatif dan mudah dipahami.
-
----
-
-## Kesimpulan
-
-Project ini adalah kombinasi antara
-- teori kriptografi,
-- aplikasi interaktif Python,
-- visualisasi proses algoritma,
-- dan pengalaman belajar yang lebih immersive.
-
-Dengan dua algoritma klasik, dua algoritma modern, serta super enkripsi, aplikasi ini diharapkan menjadi proyek edukatif yang kuat dan memiliki nilai visual yang tinggi.
+Implementasi RSA pada project ini menggunakan RSA textbook tanpa padding standar, sedangkan Caesar, Vigenere, dan XOR berulang tidak dirancang untuk melindungi data nyata. Gunakan project ini untuk pembelajaran dan demonstrasi, bukan untuk menyimpan atau mengirim informasi sensitif.
