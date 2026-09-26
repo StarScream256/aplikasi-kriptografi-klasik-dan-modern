@@ -1,5 +1,6 @@
 import math
 from utils.math_utils import is_prime
+from utils.rsa_utils import encode_message, decode_message
 
 
 def rsa_keygen(p: int, q: int):
@@ -58,8 +59,7 @@ def encrypt_rsa(plaintext: str, public_key: tuple[int, int]) -> str:
     if not plaintext:
         return ""
 
-    message_bytes = plaintext.encode("utf-8")
-    message_value = int.from_bytes(message_bytes, byteorder="big")
+    _, message_value = encode_message(plaintext)
     if message_value >= n_key:
         raise ValueError("Plaintext terlalu besar untuk modulus n. Gunakan p dan q yang lebih besar.")
 
@@ -93,8 +93,8 @@ def decrypt_rsa(ciphertext: str, private_key: tuple[int, int]):
         raise ValueError("Nilai ciphertext harus berada di antara 0 dan n - 1.")
 
     decrypted_value = pow(encrypted_value, d_key, n_key)
-    byte_length = max(1, (decrypted_value.bit_length() + 7) // 8)
     try:
-        return decrypted_value.to_bytes(byte_length, byteorder="big").decode("utf-8")
+        _, decoded_message = decode_message(decrypted_value)
+        return decoded_message
     except UnicodeDecodeError as error:
         raise ValueError("Ciphertext tidak menghasilkan plaintext UTF-8 yang valid.") from error

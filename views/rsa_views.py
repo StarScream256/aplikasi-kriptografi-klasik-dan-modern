@@ -6,6 +6,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent))
 import streamlit as st
 from algorithms.rsa import decrypt_rsa, encrypt_rsa, rsa_keygen
 from utils.math_utils import is_prime
+from utils.rsa_utils import encode_message, decode_message, plaintext_to_binary, binary_to_decimal, decimal_to_binary
 
 
 def render_key_generation():
@@ -38,11 +39,8 @@ def render_key_generation():
         with col2:
             st.warning(f"**Private Key (d, n):**\n`{keys['private_key']}`")
 
-        with st.expander("Lihat detail kunci"):
-            st.write(f"Prime p: `{keys['p']}`")
-            st.write(f"Prime q: `{keys['q']}`")
-            st.write(f"Modulus n: `{keys['n']}`")
-            st.write(f"Totient Euler (phi) φ(n): `{keys['phi']}`")
+        with st.expander("Lihat detail pembuatan kunci"):
+            key_generation_process(keys)
     else:
         st.info("RSA key belum di-generate")
 
@@ -64,6 +62,61 @@ def key_generation_process(rsa_keys):
     st.latex(rf"\text{{Private Key (d, n)}} = ({rsa_keys['private_key'][0]}, {rsa_keys['private_key'][1]})")
 
 
+def encryption_process():
+    st.write("### Proses Enkripsi RSA")
+    p_text = [x for x in st.session_state.rsa_plaintext]
+    c_bins, binary_sequence = plaintext_to_binary(st.session_state.rsa_plaintext)
+    decimal_value = binary_to_decimal(binary_sequence)
+    st.markdown("##### 1. Encode plaintext ke UTF-8")
+    st.dataframe({
+        "Karakter": p_text,
+        "Binary (8-bit)": c_bins,
+    })
+    
+    st.markdown("##### 2. Gabungkan semua binary menjadi satu dan konversi ke desimal")
+    st.latex(rf"\text{{Binary sequence = }} {' + '.join(c_bins)}")
+    st.latex(rf"\text{{Binary sequence = }} {binary_sequence}")
+    st.latex(rf"\text{{Decimal value = }} {decimal_value}")
+
+    e, n = st.session_state.rsa_keys['public_key']
+    st.markdown("##### 3. Enkripsi dengan kunci publik")
+    st.latex(rf"\text{{Rumus }} c = m^e \pmod n")
+    st.latex(rf"\text{{Message ($m$) = }} {decimal_value}")
+    st.latex(rf"\text{{Public key ($e, n$) = }} ({e}, {n})")
+    st.latex(rf"\text{{Ciphertext ($c$) = }} {decimal_value}^{{ {e} }} \pmod {{ {n} }}")
+    st.latex(rf"\text{{Ciphertext ($c$) = }} {pow(decimal_value, e, n)}")
+
+
+def decryption_process():
+    st.write("### Proses Dekripsi RSA")
+    ciphertext = st.session_state.rsa_ciphertext.strip()
+    encrypted_value = int(ciphertext)
+    d, n = st.session_state.rsa_keys["private_key"]
+    decrypted_value = pow(encrypted_value, d, n)
+    binary_values = decimal_to_binary(decrypted_value)
+    p_bins = [binary_values[i:i+8] for i in range(0, len(binary_values), 8)]
+    plaintext = decode_message(decrypted_value)[1]
+    message_bytes = plaintext.encode("utf-8")
+
+    st.markdown("##### 1. Ciphertext yang diterima")
+    st.latex(rf"\text{{Ciphertext ($c$) = }} {encrypted_value}")
+
+    st.markdown("##### 2. Dekripsi dengan kunci privat")
+    st.latex(rf"\text{{Rumus }} m = c^d \pmod n")
+    st.latex(rf"\text{{Private key ($d, n$) = }} ({d}, {n})")
+    st.latex(rf"\text{{Message ($m$) = }} {encrypted_value}^{{ {d} }} \pmod {{ {n} }}")
+    st.latex(rf"\text{{Message ($m$) = }} {decrypted_value}")
+
+    st.markdown("##### 3. Decode nilai desimal menjadi plaintext UTF-8")
+    st.latex(rf"\text{{Binary sequence = }} {''.join(p_bins)}")
+    st.latex(rf"\text{{Binary (8-bit) = }} [{', '.join(p_bins)}]")
+    st.dataframe({
+        "Binary (8-bit)": p_bins,
+        "Byte": list(message_bytes),
+        "Karakter": list(plaintext),
+    })
+    st.latex(rf"\text{{Plaintext = }} \text{{{plaintext}}}")
+
 def render_rsa_view():
     st.title("Algoritma RSA")
     st.divider()
@@ -75,10 +128,10 @@ def render_rsa_view():
 
     with tabs[0]:
         st.subheader("Enkripsi")
-        plaintext = st.text_area("Masukkan teks asli (plaintext):", key="rsa_plaintext")
+        plaintext = st.text_area("Masukkan pesan (plaintext):", key="rsa_plaintext")
 
         if keys:
-            st.caption(f"Public key (e, n): `{keys['public_key']}`")
+            st.badge(f"Public key (e, n): **{keys['public_key']}**")
             if st.button("Enkripsi", key="rsa_encrypt_button"):
                 if not plaintext:
                     st.error("Teks asli harus diisi.")
@@ -91,22 +144,21 @@ def render_rsa_view():
                             height=150,
                             key="rsa_encryption_result",
                         )
+                        encryption_process()
                     except ValueError as error:
                         st.error(str(error))
-
-                    key_generation_process(keys)
         else:
             st.info("Generate RSA key pair terlebih dahulu.")
 
     with tabs[1]:
         st.subheader("Dekripsi")
         ciphertext = st.text_area(
-            "Masukkan ciphertext (satu angka):",
+            "Masukkan ciphertext (satu bilangan utuh):",
             key="rsa_ciphertext",
         )
 
         if keys:
-            st.caption(f"Private key (d, n): `{keys['private_key']}`")
+            st.badge(f"Private key (d, n): **{keys['private_key']}**")
             if st.button("Dekripsi", key="rsa_decrypt_button"):
                 if not ciphertext:
                     st.error("Ciphertext harus diisi.")
@@ -119,6 +171,7 @@ def render_rsa_view():
                             height=150,
                             key="rsa_decryption_result",
                         )
+                        decryption_process()
                     except ValueError as error:
                         st.error(str(error))
         else:
