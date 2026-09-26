@@ -7,15 +7,20 @@ from views.xor_views import render_xor_view
 # belum ada render_xxx_view() ala Streamlit seperti rsa_views/xor_views.
 # Ganti placeholder di bawah begitu sudah dikonversi.
 
-MENU_ITEMS = [
-    "Beranda",
-    "Caesar Cipher",
-    "Vigenère Cipher",
-    "RSA",
-    "XOR",
-    "Super Enkripsi",
-]
+MENU_ITEMS = {
+    "Beranda": [],
+    "Algoritma Klasik": ["Caesar Cipher","Vigenère Cipher"],
+    "Algoritma Moderen": ["RSA","XOR"],
+    "Gabungan": ["Super Enkripsi"],
+}
 
+STATUS_TERSEDIA = {
+    "Caesar Cipher": False,
+    "Vigenère Cipher": False,
+    "RSA": True,
+    "XOR": True,
+    "Super Enkripsi": False,
+}
 
 def render_beranda():
     st.title("Aplikasi Kriptografi Klasik dan Modern")
@@ -23,14 +28,26 @@ def render_beranda():
         "Pilih algoritma di sidebar untuk mulai eksplorasi proses enkripsi "
         "dan dekripsi secara interaktif."
     )
-    st.markdown(
-        """
-        - **Algoritma Klasik**: Caesar Cipher, Vigenère Cipher
-        - **Algoritma Modern**: RSA, XOR
-        - **Super Enkripsi**: gabungan beberapa algoritma dalam satu pipeline
-        """
-    )
+    cols = st.columns(3)
+    with cols[0]:
+        with st.container(border = True):
+            st.markdown("## Algoritma Kriptografi Klasik")
+            st.caption("## Caesar Cipher")
+            st.caption("## Vigenère Cipher")
+            st.write("Transformasi alfabet A-Z, cocok untuk memahami dasar kriptografi.")
 
+    with cols[1]:
+        with st.container(border=True):
+            st.markdown("## Algoritma Kriptografi Modern")
+            st.caption("RSA")
+            st.caption("XOR")
+            st.write("Kriptografi asimetris dan operasi logika sederhana namun kuat")
+
+    with cols[2]:
+        with st.container(border=True):
+            st.markdown("## Algoritma Gabungan")
+            st.caption("Super Enkripsi")
+            st.write("Gabungan dari berbagai algoritma kriptografi dalam satu alur.")
 
 def render_placeholder(nama: str):
     st.title(nama)
@@ -48,6 +65,7 @@ def render_super_enkripsi():
 def main():
     st.set_page_config(
         page_title="Aplikasi Kriptografi Klasik dan Modern",
+        page_icon="",
         layout="wide",
     )
 
