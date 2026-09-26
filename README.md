@@ -48,12 +48,15 @@ Project ini akan menjadi aplikasi edukasi yang menampilkan:
 
 ### 1. Algoritma Klasik
 
-Saat ini project ini masih dalam tahap pengembangan untuk menentukan 2 algoritma klasik yang akan dipakai. Beberapa pilihan yang mungkin digunakan:
+1. **Caesar Cipher**
+   - Mendukung pergeseran positif (maju) dan negatif (mundur).
+   - Menampilkan **Tabel Pemetaan Alfabet (A–Z)** penuh di awal.
+   - Menampilkan skema panah indikator pergeseran dinamis per karakter.
 
-- Caesar Cipher
-- Vigenere Cipher
-- Affine Cipher
-- Playfair Cipher
+2. **Vigenère Cipher**
+   - Pemrosesan alfabet A–Z (Modulo 26).
+   - Dilengkapi tahap *preprocessing* otomatis untuk membersihkan spasi dan karakter non-huruf.
+   - Menampilkan **Tabel Penyelarasan Kunci** berulang terhadap teks secara visual.
 
 ### 2. Algoritma Modern
 
@@ -168,7 +171,7 @@ Jika project nanti dikembangkan lebih lanjut, dapat ditambahkan:
 - [x] Menyiapkan project struktur dasar
 - [x] Menambahkan RSA
 - [x] Menambahkan XOR
-- [ ] Menambahkan 2 algoritma klasik
+- [x] Menambahkan 2 algoritma klasik
 - [ ] Menyempurnakan UI
 
 ### Tahap 2: Visualisasi edukasi
