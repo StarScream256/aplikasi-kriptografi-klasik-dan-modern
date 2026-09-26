@@ -1,7 +1,12 @@
+# untuk development rsa_views.py, dengan run langsung file ini dari root folder (streamlit run views/rsa_views.py)
+# hapus kalau function render_rsa_view() sudah diimport ke main.py
+#===========================
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+#=========================== 
+
 
 import streamlit as st
 from algorithms.rsa import decrypt_rsa, encrypt_rsa, rsa_keygen
@@ -116,6 +121,7 @@ def decryption_process():
         "Karakter": list(plaintext),
     })
     st.latex(rf"\text{{Plaintext = }} \text{{{plaintext}}}")
+
 
 def render_rsa_view():
     st.title("Algoritma RSA")

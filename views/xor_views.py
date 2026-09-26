@@ -1,7 +1,11 @@
+# untuk development xor_views.py, dengan run langsung file ini dari root folder (streamlit run views/xor_views.py)
+# hapus kalau function render_xor_view() sudah diimport ke main.py
+#===========================
 import sys
 from pathlib import Path
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
+#===========================
 
 import streamlit as st
 from dataclasses import dataclass
