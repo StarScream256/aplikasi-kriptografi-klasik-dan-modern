@@ -22,6 +22,12 @@ STATUS_TERSEDIA = {
     "Super Enkripsi": False,
 }
 
+def goto(kategori: str, item: str | None = None):
+    """Callback tombol di Beranda: pindahkan sidebar ke kategori/item ini."""
+    st.session_state["kategori_radio"] = kategori
+    if item is not None:
+        st.session_state["algoritma_radio"] = item
+
 def render_beranda():
     st.title("Aplikasi Kriptografi Klasik dan Modern")
     st.write(
@@ -33,20 +39,36 @@ def render_beranda():
         with st.container(border = True):
             st.markdown("## Algoritma Kriptografi Klasik")
             st.caption("### Caesar Cipher")
-            st.caption("### Vigenère Cipher")
+            st.button(
+                "Caesar Cipher", use_container_width=True,
+                on_click=goto, args=("Algoritma Klasik", "Caesar Cipher"),
+            )
             st.write("Transformasi alfabet A-Z, cocok untuk memahami dasar kriptografi.")
-
+            st.button(
+                "Vigenère Cipher", use_container_width=True,
+                on_click=goto, args=("Algoritma Klasik", "Vigenère Cipher"),
+            )
+            st.write("Sandi Vigenère adalah metode enkripsi teks alfabet klasik menggunakan deretan sandi Caesar berdasarkan huruf-huruf pada kata kunci")
     with cols[1]:
         with st.container(border=True):
             st.markdown("## Algoritma Kriptografi Modern")
-            st.caption("### RSA")
-            st.caption("### XOR")
             st.write("Kriptografi asimetris dan operasi logika sederhana namun kuat")
+            st.button(
+                "RSA", use_container_width=True,
+                on_click=goto, args=("Algoritma Modern", "RSA"),
+            )
+            st.button(
+                "XOR", use_container_width=True,
+                on_click=goto, args=("Algoritma Modern", "XOR"),
+            )
 
     with cols[2]:
         with st.container(border=True):
             st.markdown("## Algoritma Gabungan")
-            st.caption("### Super Enkripsi")
+            st.button(
+                "Super Enkripsi", use_container_width=True,
+                on_click=goto, args=("Gabungan", "Super Enkripsi"),
+            )
             st.write("Gabungan dari berbagai algoritma kriptografi dalam satu alur.")
 
 def render_placeholder(nama: str):
@@ -55,6 +77,8 @@ def render_placeholder(nama: str):
         f"Tampilan {nama} masih dalam bentuk command-line, "
         "belum dikonversi ke Streamlit."
     )
+
+
 
 
 def render_super_enkripsi():
@@ -70,8 +94,25 @@ def main():
     )
 
     st.sidebar.title("Menu Algoritma")
-    pilihan = st.sidebar.radio("Pilih algoritma:", MENU_ITEMS)
-
+    kategori = st.sidebar.radio(
+        "Kategori:", list(MENU_ITEMS.keys()), key="kategori_radio"
+    )
+    if kategori == "Beranda":
+        pilihan = "Beranda"
+    else:
+        daftar_item = MENU_ITEMS[kategori]
+        # Jaga-jaga: kalau kategori baru saja diganti dan item lama tidak ada
+        # di kategori ini, reset ke item pertama supaya radio tidak error.
+        if st.session_state.get("algoritma_radio") not in daftar_item:
+            st.session_state["algoritma_radio"] = daftar_item[0]
+ 
+        pilihan = st.sidebar.radio(
+            "Pilih algoritma:", daftar_item, key="algoritma_radio"
+        )
+        tersedia = STATUS_TERSEDIA.get(pilihan, False)
+        badge = "🟢 Siap dipakai" if tersedia else "🟡 Belum tersedia"
+        st.sidebar.caption(badge)
+ 
     if pilihan == "Beranda":
         render_beranda()
     elif pilihan == "Caesar Cipher":
@@ -83,7 +124,7 @@ def main():
     elif pilihan == "XOR":
         render_xor_view()
     elif pilihan == "Super Enkripsi":
-        render_super_enkripsi()
+        render_placeholder("Super Enkripsi")
 
 
 if __name__ == "__main__":
