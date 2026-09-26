@@ -38,7 +38,7 @@ def render_beranda():
     with cols[0]:
         with st.container(border = True):
             st.markdown("## Algoritma Kriptografi Klasik")
-            st.caption("### Caesar Cipher")
+    
             st.button(
                 "Caesar Cipher", use_container_width=True,
                 on_click=goto, args=("Algoritma Klasik", "Caesar Cipher"),
@@ -52,15 +52,16 @@ def render_beranda():
     with cols[1]:
         with st.container(border=True):
             st.markdown("## Algoritma Kriptografi Modern")
-            st.write("Kriptografi asimetris dan operasi logika sederhana namun kuat")
             st.button(
                 "RSA", use_container_width=True,
                 on_click=goto, args=("Algoritma Modern", "RSA"),
             )
+            st.write("kriptografi asimetris yang menggunakan dua kunci berbeda, yaitu kunci publik untuk mengenkripsi data dan kunci privat untuk mendekripsinya")
             st.button(
                 "XOR", use_container_width=True,
                 on_click=goto, args=("Algoritma Modern", "XOR"),
             )
+            st.write("algoritma enkripsi simetris sederhana yang menggunakan operator logika Exclusive OR (XOR) untuk mengenkripsi dan mendekripsi data")
 
     with cols[2]:
         with st.container(border=True):
