@@ -32,21 +32,21 @@ def render_beranda():
     with cols[0]:
         with st.container(border = True):
             st.markdown("## Algoritma Kriptografi Klasik")
-            st.caption("## Caesar Cipher")
-            st.caption("## Vigenère Cipher")
+            st.caption("### Caesar Cipher")
+            st.caption("### Vigenère Cipher")
             st.write("Transformasi alfabet A-Z, cocok untuk memahami dasar kriptografi.")
 
     with cols[1]:
         with st.container(border=True):
             st.markdown("## Algoritma Kriptografi Modern")
-            st.caption("RSA")
-            st.caption("XOR")
+            st.caption("### RSA")
+            st.caption("### XOR")
             st.write("Kriptografi asimetris dan operasi logika sederhana namun kuat")
 
     with cols[2]:
         with st.container(border=True):
             st.markdown("## Algoritma Gabungan")
-            st.caption("Super Enkripsi")
+            st.caption("### Super Enkripsi")
             st.write("Gabungan dari berbagai algoritma kriptografi dalam satu alur.")
 
 def render_placeholder(nama: str):
