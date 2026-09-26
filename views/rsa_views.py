@@ -24,17 +24,25 @@ def render_key_generation():
     cols = st.columns(2)
     with cols[0]:
         p_input = st.text_input("Masukkan bilangan prima p")
-        p = int(p_input) if p_input else 0
     with cols[1]:
         q_input = st.text_input("Masukkan bilangan prima q")
-        q = int(q_input) if q_input else 0
     if st.button("Generate Key Pair"):
-        if is_prime(p) and is_prime(q) and p != q:
-            rsa_keys = rsa_keygen(p, q)
-            st.session_state.rsa_keys = rsa_keys
-            st.success("Kunci RSA berhasil dibuat.")
+        if not p_input or not q_input:
+            st.error("Input p dan q wajib diisi.")
         else:
-            st.error("Masukkan dua bilangan prima yang berbeda.")
+            try:
+                p = int(p_input)
+                q = int(q_input)
+            except ValueError:
+                st.error("p dan q harus berupa bilangan bulat.")
+                return
+
+            if is_prime(p) and is_prime(q) and p != q:
+                rsa_keys = rsa_keygen(p, q)
+                st.session_state.rsa_keys = rsa_keys
+                st.success("Kunci RSA berhasil dibuat.")
+            else:
+                st.error("Masukkan dua bilangan prima yang berbeda.")
 
     if st.session_state.rsa_keys:
         keys = st.session_state.rsa_keys
@@ -69,58 +77,127 @@ def key_generation_process(rsa_keys):
 
 def encryption_process():
     st.write("### Proses Enkripsi RSA")
-    p_text = [x for x in st.session_state.rsa_plaintext]
-    c_bins, binary_sequence = plaintext_to_binary(st.session_state.rsa_plaintext)
-    decimal_value = binary_to_decimal(binary_sequence)
-    st.markdown("##### 1. Encode plaintext ke UTF-8")
-    st.dataframe({
-        "Karakter": p_text,
-        "Binary (8-bit)": c_bins,
-    })
-    
-    st.markdown("##### 2. Gabungkan semua binary menjadi satu dan konversi ke desimal")
-    st.latex(rf"\text{{Binary sequence = }} {' + '.join(c_bins)}")
-    st.latex(rf"\text{{Binary sequence = }} {binary_sequence}")
-    st.latex(rf"\text{{Decimal value = }} {decimal_value}")
-
+    plaintext = st.session_state.rsa_plaintext
+    message_bytes = plaintext.encode("utf-8")
     e, n = st.session_state.rsa_keys['public_key']
-    st.markdown("##### 3. Enkripsi dengan kunci publik")
-    st.latex(rf"\text{{Rumus }} c = m^e \pmod n")
-    st.latex(rf"\text{{Message ($m$) = }} {decimal_value}")
-    st.latex(rf"\text{{Public key ($e, n$) = }} ({e}, {n})")
-    st.latex(rf"\text{{Ciphertext ($c$) = }} {decimal_value}^{{ {e} }} \pmod {{ {n} }}")
-    st.latex(rf"\text{{Ciphertext ($c$) = }} {pow(decimal_value, e, n)}")
+    block_size = (n.bit_length() - 1) // 8
+    blocks = [message_bytes[i:i + block_size] for i in range(0, len(message_bytes), block_size)]
+    message_values = [int.from_bytes(block, byteorder="big") for block in blocks]
+    cipher_values = [pow(value, e, n) for value in message_values]
+    ciphertext_blocks = [
+        f"{len(block)}:{cipher_value}"
+        for block, cipher_value in zip(blocks, cipher_values)
+    ]
+    character_ranges = []
+    byte_position = 0
+    for character in plaintext:
+        character_size = len(character.encode("utf-8"))
+        character_ranges.append((byte_position, byte_position + character_size, character))
+        byte_position += character_size
+
+    st.markdown("##### 1. Encode plaintext dan bagi menjadi blok byte")
+    st.info(
+        f"Batas blok: {block_size} byte per blok. "
+        f"Nilai maksimum mᵢ = 256^{block_size} - 1 = {256 ** block_size - 1}, "
+        f"dan harus lebih kecil dari n = {n}."
+    )
+    st.write("Setiap blok diubah dari byte UTF-8 menjadi biner 8-bit, lalu seluruh biner digabungkan menjadi mᵢ.")
+    for index, (block, message_value) in enumerate(zip(blocks, message_values), start=1):
+        binary_bytes = [format(byte, "08b") for byte in block]
+        binary_value = "".join(binary_bytes)
+        block_start = (index - 1) * block_size
+        block_end = block_start + len(block)
+        position = f"{block_start + 1}-{block_end}"
+        characters = []
+        for character_start, character_end, character in character_ranges:
+            if character_start < block_end and character_end > block_start:
+                is_complete = character_start >= block_start and character_end <= block_end
+                characters.append(character if is_complete else f"{character} (UTF-8 terpotong)")
+        character_text = f"[{', '.join(characters)}]" if characters else "-"
+
+        with st.container(border=True):
+            st.markdown(f"**Blok {index}** · posisi byte {position}")
+            st.table({
+                "Karakter yang diproses": character_text,
+                "UTF-8 byte": f"[{', '.join(str(byte) for byte in block)}]",
+                "Biner per byte": f"[{', '.join(binary_bytes)}]",
+                "Biner yang digabungkan": binary_value,
+                "Nilai desimal mᵢ": str(message_value),
+            })
+
+    st.markdown("##### 2. Enkripsi setiap blok dengan kunci publik")
+    st.latex(r"c_i = m_i^e \pmod n")
+    st.latex(rf"\text{{Public key (e, n) = }} ({e}, {n})")
+    st.dataframe({
+        "Blok": list(range(1, len(blocks) + 1)),
+        "Nilai mᵢ": [str(value) for value in message_values],
+        "Nilai cᵢ": ciphertext_blocks,
+    })
 
 
 def decryption_process():
     st.write("### Proses Dekripsi RSA")
     ciphertext = st.session_state.rsa_ciphertext.strip()
-    encrypted_value = int(ciphertext)
     d, n = st.session_state.rsa_keys["private_key"]
-    decrypted_value = pow(encrypted_value, d, n)
-    binary_values = decimal_to_binary(decrypted_value)
-    p_bins = [binary_values[i:i+8] for i in range(0, len(binary_values), 8)]
-    plaintext = decode_message(decrypted_value)[1]
-    message_bytes = plaintext.encode("utf-8")
+    block_size = (n.bit_length() - 1) // 8
+    encrypted_tokens = ciphertext.split()
+    encrypted_values = []
+    block_lengths = []
+    for token in encrypted_tokens:
+        if ":" in token:
+            length_text, value_text = token.split(":", 1)
+            block_lengths.append(int(length_text))
+        else:
+            value_text = token
+            block_lengths.append(None)
+        encrypted_values.append(int(value_text))
+    decrypted_values = [pow(value, d, n) for value in encrypted_values]
+    decrypted_blocks = [
+        value.to_bytes(
+            block_lengths[index]
+            if block_lengths[index] is not None
+            else block_size if index < len(decrypted_values) - 1
+            else max(1, (value.bit_length() + 7) // 8),
+            byteorder="big",
+        )
+        for index, value in enumerate(decrypted_values)
+    ]
+    message_bytes = b"".join(decrypted_blocks)
+    plaintext = message_bytes.decode("utf-8")
 
     st.markdown("##### 1. Ciphertext yang diterima")
-    st.latex(rf"\text{{Ciphertext ($c$) = }} {encrypted_value}")
+    st.table({
+        "Ciphertext": encrypted_tokens,
+        "Panjang byte": [str(length) if length is not None else "legacy" for length in block_lengths],
+        "Nilai cᵢ": [str(value) for value in encrypted_values],
+    })
 
     st.markdown("##### 2. Dekripsi dengan kunci privat")
-    st.latex(rf"\text{{Rumus }} m = c^d \pmod n")
+    st.latex(r"m_i = c_i^d \pmod n")
     st.latex(rf"\text{{Private key ($d, n$) = }} ({d}, {n})")
-    st.latex(rf"\text{{Message ($m$) = }} {encrypted_value}^{{ {d} }} \pmod {{ {n} }}")
-    st.latex(rf"\text{{Message ($m$) = }} {decrypted_value}")
-
-    st.markdown("##### 3. Decode nilai desimal menjadi plaintext UTF-8")
-    st.latex(rf"\text{{Binary sequence = }} {''.join(p_bins)}")
-    st.latex(rf"\text{{Binary (8-bit) = }} [{', '.join(p_bins)}]")
     st.dataframe({
-        "Binary (8-bit)": p_bins,
-        "Byte": list(message_bytes),
-        "Karakter": list(plaintext),
+        "Blok": list(range(1, len(encrypted_values) + 1)),
+        "Panjang byte": [str(length) if length is not None else "legacy" for length in block_lengths],
+        "Nilai cᵢ": [str(value) for value in encrypted_values],
+        "Nilai mᵢ": [str(value) for value in decrypted_values],
     })
-    st.latex(rf"\text{{Plaintext = }} \text{{{plaintext}}}")
+
+    block_characters = []
+    for block in decrypted_blocks:
+        try:
+            block_characters.append(block.decode("utf-8"))
+        except UnicodeDecodeError:
+            block_characters.append("bagian karakter UTF-8")
+
+    st.markdown("##### 3. Konversi nilai desimal mᵢ menjadi byte dan karakter")
+    st.write("Setiap mᵢ dikembalikan ke byte sesuai panjang blok, lalu seluruh byte digabungkan dan di-decode sebagai UTF-8.")
+    st.table({
+        "Blok": list(range(1, len(decrypted_values) + 1)),
+        "Nilai mᵢ": [str(value) for value in decrypted_values],
+        "Byte": [list(block) for block in decrypted_blocks],
+        "Karakter": block_characters,
+    })
+    st.info(f"Plaintext gabungan: **{plaintext}**")
 
 
 def render_rsa_view():
@@ -145,7 +222,7 @@ def render_rsa_view():
                     try:
                         ciphertext = encrypt_rsa(plaintext, keys["public_key"])
                         st.text_area(
-                            "Hasil enkripsi (satu angka ciphertext):",
+                            "Hasil enkripsi (blok ciphertext dipisahkan spasi):",
                             ciphertext,
                             height=150,
                             key="rsa_encryption_result",
@@ -159,7 +236,7 @@ def render_rsa_view():
     with tabs[1]:
         st.subheader("Dekripsi")
         ciphertext = st.text_area(
-            "Masukkan ciphertext (satu bilangan utuh):",
+            "Masukkan ciphertext (blok dipisahkan spasi):",
             key="rsa_ciphertext",
         )
 

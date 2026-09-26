@@ -3,6 +3,14 @@ from utils.math_utils import is_prime
 from utils.rsa_utils import encode_message, decode_message
 
 
+def _get_block_size(n_key: int) -> int:
+    """Return the largest byte block whose values are smaller than n."""
+    block_size = (n_key.bit_length() - 1) // 8
+    if block_size < 1:
+        raise ValueError("Modulus n terlalu kecil untuk mengenkripsi data byte.")
+    return block_size
+
+
 def rsa_keygen(p: int, q: int):
     """
     Generate RSA keys based on two prime numbers p and q.
@@ -45,7 +53,7 @@ def rsa_keygen(p: int, q: int):
 
 def encrypt_rsa(plaintext: str, public_key: tuple[int, int]) -> str:
     """
-    Enkripsi seluruh plaintext UTF-8 sebagai satu bilangan RSA.
+    Enkripsi plaintext UTF-8 dalam beberapa blok bilangan RSA.
 
     Args:
         plaintext (str): Plaintext yang akan dienkripsi.
@@ -59,18 +67,28 @@ def encrypt_rsa(plaintext: str, public_key: tuple[int, int]) -> str:
     if not plaintext:
         return ""
 
-    _, message_value = encode_message(plaintext)
-    if message_value >= n_key:
-        raise ValueError("Plaintext terlalu besar untuk modulus n. Gunakan p dan q yang lebih besar.")
+    message_bytes, _ = encode_message(plaintext)
+    block_size = _get_block_size(n_key)
+    encrypted_blocks = []
 
-    encrypted_value = pow(message_value, e_key, n_key)
-    return str(encrypted_value)
+    for start in range(0, len(message_bytes), block_size):
+        block = message_bytes[start:start + block_size]
+        message_value = int.from_bytes(block, byteorder="big")
+        if message_value >= n_key:
+            raise ValueError(
+                f"Nilai m pada blok {start // block_size + 1} terlalu besar untuk modulus n. "
+                f"m saat ini = {message_value}."
+            )
+        encrypted_value = pow(message_value, e_key, n_key)
+        encrypted_blocks.append(f"{len(block)}:{encrypted_value}")
+
+    return " ".join(encrypted_blocks)
 
 
 
 def decrypt_rsa(ciphertext: str, private_key: tuple[int, int]):
     """
-    Dekripsi satu bilangan RSA menjadi seluruh plaintext UTF-8.
+    Dekripsi beberapa blok RSA menjadi plaintext UTF-8.
 
     Args:
         ciphertext (str): Ciphertext yang akan didekripsi.
@@ -84,17 +102,43 @@ def decrypt_rsa(ciphertext: str, private_key: tuple[int, int]):
         return ""
 
     d_key, n_key = private_key
+    block_size = _get_block_size(n_key)
     values = ciphertext.split()
-    if len(values) != 1:
-        raise ValueError("Ciphertext RSA harus berupa satu bilangan.")
+    decrypted_bytes = bytearray()
 
-    encrypted_value = int(values[0])
-    if not 0 <= encrypted_value < n_key:
-        raise ValueError("Nilai ciphertext harus berada di antara 0 dan n - 1.")
+    for index, token in enumerate(values):
+        block_length = None
+        value = token
+        if ":" in token:
+            length_text, value = token.split(":", 1)
+            try:
+                block_length = int(length_text)
+            except ValueError as error:
+                raise ValueError("Panjang blok ciphertext RSA tidak valid.") from error
+            if not 1 <= block_length <= block_size:
+                raise ValueError("Panjang blok ciphertext RSA berada di luar batas.")
 
-    decrypted_value = pow(encrypted_value, d_key, n_key)
+        try:
+            encrypted_value = int(value)
+        except ValueError as error:
+            raise ValueError("Setiap blok ciphertext RSA harus berupa bilangan.") from error
+
+        if not 0 <= encrypted_value < n_key:
+            raise ValueError("Nilai ciphertext harus berada di antara 0 dan n - 1.")
+
+        decrypted_value = pow(encrypted_value, d_key, n_key)
+        if block_length is not None:
+            try:
+                decrypted_bytes.extend(decrypted_value.to_bytes(block_length, byteorder="big"))
+            except OverflowError as error:
+                raise ValueError("Panjang metadata blok tidak cocok dengan plaintext.") from error
+        elif index < len(values) - 1:
+            decrypted_bytes.extend(decrypted_value.to_bytes(block_size, byteorder="big"))
+        else:
+            byte_length = max(1, (decrypted_value.bit_length() + 7) // 8)
+            decrypted_bytes.extend(decrypted_value.to_bytes(byte_length, byteorder="big"))
+
     try:
-        _, decoded_message = decode_message(decrypted_value)
-        return decoded_message
+        return bytes(decrypted_bytes).decode("utf-8")
     except UnicodeDecodeError as error:
         raise ValueError("Ciphertext tidak menghasilkan plaintext UTF-8 yang valid.") from error

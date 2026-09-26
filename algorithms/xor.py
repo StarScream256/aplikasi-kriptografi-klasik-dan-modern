@@ -9,6 +9,9 @@ def encrypt_xor(plaintext: str, key: str) -> str:
     Returns:
         str: Ciphertext.
     """
+    if not key:
+        raise ValueError("Kunci XOR wajib diisi.")
+
     ciphertext = []
     key_length = len(key)
     
@@ -31,6 +34,9 @@ def decrypt_xor(ciphertext: str, key: str) -> str:
     Returns:
         str: Plaintext.
     """
+    if not key:
+        raise ValueError("Kunci XOR wajib diisi.")
+
     plaintext = []
     key_length = len(key)
     
