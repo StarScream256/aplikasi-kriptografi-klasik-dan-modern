@@ -1,6 +1,6 @@
 def ciphertext_to_hex(ciphertext: str) -> str:
     """Convert character-based XOR ciphertext to readable hexadecimal."""
-    return " ".join(f"{ord(char):X}" for char in ciphertext)
+    return " ".join(f"{ord(char):02X}" for char in ciphertext)
 
 
 def hex_to_ciphertext(value: str) -> str:
