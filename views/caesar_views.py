@@ -1,5 +1,5 @@
 # views/caesar_views.py
-import steamlit as st
+import streamlit as st
 from algorithms.caesar import CaesarCipher
 
 def render_caesar_view():
