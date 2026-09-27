@@ -2,8 +2,8 @@ import streamlit as st
 
 from views.rsa_views import render_rsa_view
 from views.xor_views import render_xor_view
-from views.caesar_views import render_caesar_menu
-from views.vigenere_views import render_vigenere_menu
+from views.caesar_views import render_caesar_view
+from views.vigenere_views import render_vigenere_view
 from views.super_encryption_views import render_super_enkripsi_view
 
 
@@ -106,9 +106,9 @@ def main():
     if pilihan == "Beranda":
         render_beranda()
     elif pilihan == "Caesar Cipher":
-        render_caesar_menu()
+        render_caesar_view()
     elif pilihan == "Vigenère Cipher":
-        render_vigenere_menu()
+        render_vigenere_view()
     elif pilihan == "RSA":
         render_rsa_view()
     elif pilihan == "XOR":
