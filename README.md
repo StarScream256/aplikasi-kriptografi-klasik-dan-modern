@@ -104,14 +104,16 @@ Caesar dan Vigenere menghapus spasi serta karakter non-huruf, sehingga plaintext
 ---
 
 ## Konsep UI yang Sederhana
-
-Antarmuka Streamlit tersedia untuk RSA dan XOR. Caesar dan Vigenere juga memiliki menu berbasis CLI. Di Streamlit, menu Caesar, Vigenere, dan Super Enkripsi masih menampilkan placeholder.
+Antarmuka Streamlit sederhana namun interaktif, menampilkan penjelasan dan proses bagaimana enkripsi dan dekripsi tersebut bisa terbentuk.
+Antarmuka Streamlit tersedia untuk algoritma enkripsi klasik seperto Caesar dan Vigenere, antarmuka juga tersedia untuk Algoritma enkripsi moderen seperti RSA dan XOR. dalam aplikasi ini terdapat bagian beranda atau landing page, pilihan menu enkripsi yang akan menampilkan pilihan enkripsi klasik, moderen, maupun gabungan. setelah memilih menu enkripsi akan ditampilkan metode enkripsi yang akan digunakan, seperti menu Caesar, Vigenere, RSA, XOR, dan Super.
+Pada setiap
 
 ### Struktur UI
-
-- Sidebar: navigasi algoritma.
+- landing page: menampilkan metode apa saja yang dapat digunakan beserta penjelasannya.
+- Sidebar: navigasi pemilihan algoritma.
+- Caesar Cipher dan Vigenere: menampilkan area enkripsi dan dekripsi dengan detail proses
 - RSA dan XOR: area enkripsi/dekripsi dan detail proses.
-- Super Enkripsi: kelas algoritma sudah tersedia, tetapi belum memiliki view.
+- Super Enkripsi: menampilkan proses enkripsi dari gabungan enkripsi carsar cipher, vigenere, RSA, dan XOR 
 
 ---
 

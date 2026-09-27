@@ -2,10 +2,10 @@ import streamlit as st
 
 from views.rsa_views import render_rsa_view
 from views.xor_views import render_xor_view
+from views.caesar_views import render_caesar_menu
+from views.vigenere_views import render_vigenere_menu
+from views.super_encryption_views import render_super_enkripsi_view
 
-# TODO: caesar_views.py & vigenere_views.py masih versi CLI (print/input),
-# belum ada render_xxx_view() ala Streamlit seperti rsa_views/xor_views.
-# Ganti placeholder di bawah begitu sudah dikonversi.
 
 MENU_ITEMS = {
     "Beranda": [],
@@ -15,11 +15,11 @@ MENU_ITEMS = {
 }
 
 STATUS_TERSEDIA = {
-    "Caesar Cipher": False,
-    "Vigenère Cipher": False,
+    "Caesar Cipher": True,
+    "Vigenère Cipher": True,
     "RSA": True,
     "XOR": True,
-    "Super Enkripsi": False,
+    "Super Enkripsi": True,
 }
 
 def goto(kategori: str, item: str | None = None):
@@ -72,12 +72,6 @@ def render_beranda():
             )
             st.write("Gabungan dari berbagai algoritma kriptografi dalam satu alur.")
 
-def render_placeholder(nama: str):
-    st.title(nama)
-    st.info(
-        f"Tampilan {nama} masih dalam bentuk command-line, "
-        "belum dikonversi ke Streamlit."
-    )
 
 
 
@@ -102,30 +96,25 @@ def main():
         pilihan = "Beranda"
     else:
         daftar_item = MENU_ITEMS[kategori]
-        # Jaga-jaga: kalau kategori baru saja diganti dan item lama tidak ada
-        # di kategori ini, reset ke item pertama supaya radio tidak error.
         if st.session_state.get("algoritma_radio") not in daftar_item:
             st.session_state["algoritma_radio"] = daftar_item[0]
  
         pilihan = st.sidebar.radio(
             "Pilih algoritma:", daftar_item, key="algoritma_radio"
         )
-        tersedia = STATUS_TERSEDIA.get(pilihan, False)
-        badge = "🟢 Siap dipakai" if tersedia else "🟡 Belum tersedia"
-        st.sidebar.caption(badge)
- 
+        
     if pilihan == "Beranda":
         render_beranda()
     elif pilihan == "Caesar Cipher":
-        render_placeholder("Caesar Cipher")
+        render_caesar_menu()
     elif pilihan == "Vigenère Cipher":
-        render_placeholder("Vigenère Cipher")
+        render_vigenere_menu()
     elif pilihan == "RSA":
         render_rsa_view()
     elif pilihan == "XOR":
         render_xor_view()
     elif pilihan == "Super Enkripsi":
-        render_placeholder("Super Enkripsi")
+        render_super_enkripsi_view()
 
 
 if __name__ == "__main__":
