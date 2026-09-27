@@ -10,7 +10,7 @@ from views.super_encryption_views import render_super_enkripsi_view
 MENU_ITEMS = {
     "Beranda": [],
     "Algoritma Klasik": ["Caesar Cipher","Vigenère Cipher"],
-    "Algoritma Moderen": ["RSA","XOR"],
+    "Algoritma Modern": ["RSA","XOR"],
     "Gabungan": ["Super Enkripsi"],
 }
 
@@ -71,9 +71,6 @@ def render_beranda():
                 on_click=goto, args=("Gabungan", "Super Enkripsi"),
             )
             st.write("Gabungan dari berbagai algoritma kriptografi dalam satu alur.")
-
-
-
 
 
 def render_super_enkripsi():
